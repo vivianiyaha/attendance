@@ -141,10 +141,6 @@ if menu == "Dashboard":
     c2.markdown(f"<div class='card'><h2>{len(att_files)}</h2><p>Attendance Files</p></div>", unsafe_allow_html=True)
     c3.markdown(f"<div class='card'><h2>{len(leave_files)}</h2><p>Leave Files</p></div>", unsafe_allow_html=True)
 
-    st.divider()
-
-    st.subheader("Employee List")
-    st.dataframe(employees, use_container_width=True)
 
 
 # ==========================================================
