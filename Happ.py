@@ -246,3 +246,56 @@ elif menu == "HR Analytics":
     )
     
     st.plotly_chart(fig, use_container_width=True)
+
+    # ==========================================================
+# TOP 10 MOST PUNCTUAL EMPLOYEES
+# ==========================================================
+
+att_files = get_files("daily-attendance")
+
+if not att_files:
+    st.warning("No attendance data available for analytics")
+else:
+    all_data = []
+
+    # Load and combine all attendance files
+    for file in att_files:
+        path = os.path.join("daily-attendance", file)
+        df = load_attendance(path)
+
+        if "Name" in df.columns and "Time in" in df.columns:
+            df["Time in"] = pd.to_datetime(df["Time in"], errors="coerce")
+            all_data.append(df)
+
+    if all_data:
+        df_all = pd.concat(all_data, ignore_index=True)
+
+        # Define punctuality (on or before 8:30 AM)
+        punctual_df = df_all[df_all["Time in"].dt.time <= time(8, 30)]
+
+        # Count punctual days per employee
+        punctual_counts = (
+            punctual_df["Name"]
+            .value_counts()
+            .reset_index()
+        )
+
+        punctual_counts.columns = ["Name", "Punctual Days"]
+
+        # Get top 10
+        top_10 = punctual_counts.head(10)
+
+        st.subheader("🏆 Top 10 Most Punctual Employees")
+        st.dataframe(top_10, use_container_width=True)
+
+        # Optional: Visualization
+        fig = px.bar(
+            top_10,
+            x="Name",
+            y="Punctual Days",
+            title="Top 10 Most Punctual Employees"
+        )
+        st.plotly_chart(fig, use_container_width=True)
+
+    else:
+        st.warning("No valid attendance data found")
