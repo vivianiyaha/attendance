@@ -6,9 +6,8 @@ from pathlib import Path
 from datetime import datetime, time
 import plotly.express as px
 
-# ==========================================================
-# CONFIG
-# ==========================================================
+
+# CONFIGURATION
 
 st.set_page_config(
     page_title="HR Attendance System",
@@ -16,25 +15,20 @@ st.set_page_config(
     initial_sidebar_state="collapsed"
 )
 
-# ==========================================================
 # FOLDERS
-# ==========================================================
 
 Path("daily-attendance").mkdir(exist_ok=True)
 Path("leave-management").mkdir(exist_ok=True)
 
 employee_file = "employee.csv"
 
-# ==========================================================
 # INIT EMPLOYEE FILE
-# ==========================================================
 
 if not os.path.exists(employee_file):
     pd.DataFrame({"Name": []}).to_csv(employee_file, index=False)
 
-# ==========================================================
-# STYLING
-# ==========================================================
+
+# CSS
 
 st.markdown("""
 <style>
@@ -63,9 +57,8 @@ section[data-testid="stSidebar"] * {
 </style>
 """, unsafe_allow_html=True)
 
-# ==========================================================
-# SIDEBAR
-# ==========================================================
+
+# SIDEBAR NAVIGATION
 
 st.sidebar.title("HR SYSTEM")
 
@@ -74,9 +67,7 @@ menu = st.sidebar.radio(
     ["Dashboard", "Attendance Reports", "Leave Management", "HR Analytics"]
 )
 
-# ==========================================================
 # SAFE LOADERS
-# ==========================================================
 
 def load_employees():
     df = pd.read_csv(employee_file)
@@ -96,9 +87,8 @@ def get_files(folder):
     return [f for f in os.listdir(folder) if f.endswith(".csv")]
 
 
-# ==========================================================
-# 🔥 FIXED ATTENDANCE LOADER (IMPORTANT)
-# ==========================================================
+# ATTENDANCE LOADER 
+
 
 def load_attendance(file_path):
     df = pd.read_csv(file_path)
@@ -122,9 +112,7 @@ def load_attendance(file_path):
 
     return df
 
-# ==========================================================
 # DASHBOARD
-# ==========================================================
 
 if menu == "Dashboard":
 
@@ -151,9 +139,8 @@ if menu == "Dashboard":
     st.subheader("Employees")
     st.dataframe(employees, use_container_width=True)
 
-# ==========================================================
+
 # ATTENDANCE REPORTS
-# ==========================================================
 
 elif menu == "Attendance Reports":
 
@@ -205,10 +192,7 @@ elif menu == "Attendance Reports":
         st.subheader("Overtime")
         st.dataframe(overtime)
 
-
-# ==========================================================
 # LEAVE MANAGEMENT
-# ==========================================================
 
 elif menu == "Leave Management":
 
@@ -223,10 +207,7 @@ elif menu == "Leave Management":
     else:
         st.warning("No leave data found")
 
-
-# ==========================================================
 # HR ANALYTICS
-# ==========================================================
 
 elif menu == "HR Analytics":
 
@@ -247,9 +228,7 @@ elif menu == "HR Analytics":
     
     st.plotly_chart(fig, use_container_width=True)
 
-    # ==========================================================
 # TOP 10 MOST PUNCTUAL EMPLOYEES
-# ==========================================================
 
 att_files = get_files("daily-attendance")
 
@@ -300,9 +279,9 @@ else:
     else:
         st.warning("No valid attendance data found")
 
-# ==========================================================
+
 # ADVANCED PUNCTUALITY ANALYTICS
-# ==========================================================
+
 
 att_files = get_files("daily-attendance")
 
