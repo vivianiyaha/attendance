@@ -424,10 +424,6 @@ elif menu == "Leave Management":
 # HR ANALYTICS (MONTHLY ONLY)
 # =======================================
 
-# =======================================
-# HR ANALYTICS (MONTHLY ONLY)
-# =======================================
-
 elif menu == "HR Analytics":
 
     st.markdown(
@@ -442,39 +438,14 @@ elif menu == "HR Analytics":
         len(employees)
     )
 
-    emp_counts = (
-        employees["Name"]
-        .value_counts()
-        .reset_index()
-    )
-
-    emp_counts.columns = [
-        "Name",
-        "Count"
-    ]
-
-    fig = px.bar(
-        emp_counts,
-        x="Name",
-        y="Count",
-        title="Employee Distribution"
-    )
-
-    st.plotly_chart(
-        fig,
-        use_container_width=True
-    )
-
     # =====================================================
-    # MONTHLY ATTENDANCE ANALYTICS
+    # LOAD ATTENDANCE FILES
     # =====================================================
 
     att_files = get_files("daily-attendance")
 
     if not att_files:
-        st.warning(
-            "No attendance data available for analytics"
-        )
+        st.warning("No attendance data available")
 
     else:
 
@@ -487,52 +458,83 @@ elif menu == "HR Analytics":
                 file
             )
 
-            df = load_attendance(path)
+            try:
+                df = load_attendance(path)
 
-            if (
-                "Name" in df.columns and
-                "Time in" in df.columns
-            ):
+                # Ensure required columns exist
+                if (
+                    "Name" not in df.columns or
+                    "Time in" not in df.columns
+                ):
+                    continue
 
-                # Clean names
+                # Clean employee names
                 df["Name"] = (
                     df["Name"]
                     .astype(str)
                     .str.strip()
                 )
 
-                # Convert time
+                # Remove empty names
+                df = df[
+                    df["Name"].notna()
+                ]
+
+                # Robust datetime conversion
                 df["Time in"] = pd.to_datetime(
                     df["Time in"],
-                    errors="coerce"
+                    errors="coerce",
+                    infer_datetime_format=True
                 )
 
-                # Date
+                # Fix date
                 if "Date" in df.columns:
+
                     df["Date"] = pd.to_datetime(
                         df["Date"],
-                        errors="coerce"
+                        errors="coerce",
+                        infer_datetime_format=True
                     )
+
                 else:
-                    df["Date"] = pd.to_datetime(
-                        "today"
-                    )
+                    df["Date"] = pd.Timestamp.today()
 
                 all_data.append(df)
 
-        if all_data:
+            except Exception as e:
+                st.warning(
+                    f"Could not read {file}: {e}"
+                )
+
+        # =====================================================
+        # CHECK DATA EXISTS
+        # =====================================================
+
+        if len(all_data) == 0:
+            st.error("No valid attendance data found")
+
+        else:
 
             df_all = pd.concat(
                 all_data,
                 ignore_index=True
             )
 
-            # Remove empty rows
+            # Remove invalid records
             df_all = df_all.dropna(
                 subset=["Name", "Time in"]
             )
 
-            # Month column
+            if df_all.empty:
+                st.error(
+                    "Attendance data loaded but Time in column is invalid."
+                )
+                st.stop()
+
+            # =====================================================
+            # MONTH COLUMN
+            # =====================================================
+
             df_all["Month"] = (
                 df_all["Date"]
                 .dt.to_period("M")
@@ -561,13 +563,13 @@ elif menu == "HR Analytics":
                         "Name",
                         "count"
                     ),
-                    On_Time_Days=(
-                        "Late",
-                        lambda x: (~x).sum()
-                    ),
                     Late_Count=(
                         "Late",
                         "sum"
+                    ),
+                    On_Time_Days=(
+                        "Late",
+                        lambda x: (~x).sum()
                     )
                 )
                 .reset_index()
@@ -594,6 +596,37 @@ elif menu == "HR Analytics":
             )
 
             # =====================================================
+            # DASHBOARD METRICS
+            # =====================================================
+
+            c1, c2, c3 = st.columns(3)
+
+            c1.metric(
+                "Employees Tracked",
+                len(monthly_summary)
+            )
+
+            c2.metric(
+                "Total Late Records",
+                int(
+                    monthly_summary[
+                        "Late_Count"
+                    ].sum()
+                )
+            )
+
+            c3.metric(
+                "Late > 5 Times",
+                len(
+                    monthly_summary[
+                        monthly_summary[
+                            "Late_Count"
+                        ] > 5
+                    ]
+                )
+            )
+
+            # =====================================================
             # PERFORMANCE TABLE
             # =====================================================
 
@@ -607,7 +640,7 @@ elif menu == "HR Analytics":
             )
 
             # =====================================================
-            # TOP PERFORMERS CHART
+            # TOP PERFORMERS
             # =====================================================
 
             fig = px.bar(
@@ -623,21 +656,28 @@ elif menu == "HR Analytics":
             )
 
             # =====================================================
-            # STAFF LATE MORE THAN 5 TIMES
+            # STAFF LATE > 5 TIMES
             # =====================================================
 
-            frequent_late_staff = monthly_summary[
-                monthly_summary["Late_Count"] > 5
+            late_staff = monthly_summary[
+                monthly_summary[
+                    "Late_Count"
+                ] > 5
             ]
 
             st.subheader(
-                "⚠ Staff Late More Than 5 Times"
+                "⚠ Employees Late More Than 5 Times"
             )
 
-            if not frequent_late_staff.empty:
+            if late_staff.empty:
+                st.success(
+                    "No employee has been late more than 5 times."
+                )
+
+            else:
 
                 st.dataframe(
-                    frequent_late_staff[
+                    late_staff[
                         [
                             "Name",
                             "Late_Count",
@@ -648,23 +688,13 @@ elif menu == "HR Analytics":
                 )
 
                 fig = px.bar(
-                    frequent_late_staff,
+                    late_staff,
                     x="Name",
                     y="Late_Count",
-                    title="Employees Late More Than 5 Times"
+                    title="Late More Than 5 Times"
                 )
 
                 st.plotly_chart(
                     fig,
                     use_container_width=True
                 )
-
-            else:
-                st.success(
-                    "No employee has been late more than 5 times."
-                )
-
-        else:
-            st.warning(
-                "No valid attendance data found"
-            )
