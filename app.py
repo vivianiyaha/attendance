@@ -83,7 +83,7 @@ menu = st.sidebar.radio(
         "Dashboard",
         "Attendance Reports",
         "Leave Management",
-        "Attendance Analytics"
+        "HR Analytics"
     ]
 )
 
@@ -298,6 +298,9 @@ elif menu == "Attendance Reports":
         # =====================================================
         # ABSENTEES
         # =====================================================
+        # =====================================================
+        # ABSENTEES (ONLY NO TIME IN = ABSENT)
+        # =====================================================
 
         employees_df = load_employees()
 
@@ -307,7 +310,7 @@ elif menu == "Attendance Reports":
             .astype(str)
             .str.strip()
         )
-
+ 
         # Clean attendance names
         df["Name"] = (
             df["Name"]
@@ -315,7 +318,15 @@ elif menu == "Attendance Reports":
             .str.strip()
         )
 
-        # Staff on approved leave
+        # Convert Time in properly
+        df["Time in"] = pd.to_datetime(
+            df["Time in"],
+            errors="coerce"
+        )
+
+        # =====================================================
+        # STAFF ON APPROVED LEAVE
+        # =====================================================
         staff_on_leave = set(
             pd.Series(list(staff_on_leave))
             .astype(str)
@@ -323,43 +334,56 @@ elif menu == "Attendance Reports":
             .str.lower()
         )
 
-        # Employees that truly attended
+        # =====================================================
+        # STAFF WITH VALID TIME IN = PRESENT
+        # =====================================================
         present_staff = set(
             df[
-            (df["Time in"].notna()) |
-            (df["Time out"].notna())
+            df["Time in"].notna()
             ]["Name"]
+            .astype(str)
+            .str.strip()
+            .str.lower()
+            .unique()
         )
 
-        # All employees
+        # =====================================================
+        # ALL EMPLOYEES
+        # =====================================================
+
         all_staff = set(
             employees_df["Name"]
             .astype(str)
             .str.strip()
             .str.lower()
+            .unique()
         )
 
-        # Absentees
-        absent_names = (
-            all_staff
-            - present_staff
-            - staff_on_leave
-        )
+        # =====================================================
+        # ABSENTEES
+        # No Time In = Absent
+        # Excluding approved leave
+        # =====================================================
 
-        # Display proper names
-        absentees = pd.DataFrame({
-            "Name": [
-                name
-                for name in employees_df["Name"]
-                if (
-                    str(name)
-                    .strip()
-                    .lower()
-                    in absent_names
-                )
-            ]
-        })
+absent_names = (
+    all_staff
+    - present_staff
+    - staff_on_leave
+)
 
+# =====================================================
+# DISPLAY ABSENTEES
+# =====================================================
+
+absentees = employees_df[
+    employees_df["Name"]
+    .str.strip()
+    .str.lower()
+    .isin(absent_names)
+][["Name"]].drop_duplicates()
+
+absentees.reset_index(drop=True, inplace=True)
+       
         # =====================================================
         # SUMMARY
         # =====================================================
