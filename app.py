@@ -295,7 +295,7 @@ elif menu == "Attendance Reports":
                 staff_on_leave.update(
                     approved["Name"].astype(str)
                 )
-                        # =====================================================
+        # =====================================================
         # ABSENTEES
         # =====================================================
 
@@ -326,12 +326,9 @@ elif menu == "Attendance Reports":
         # Employees that truly attended
         present_staff = set(
             df[
-                (df["Time in"].notna()) |
-                (df["Time out"].notna())
+            (df["Time in"].notna()) |
+            (df["Time out"].notna())
             ]["Name"]
-            .astype(str)
-            .str.strip()
-            .str.lower()
         )
 
         # All employees
