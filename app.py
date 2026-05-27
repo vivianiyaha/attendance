@@ -299,6 +299,22 @@ elif menu == "Attendance Reports":
                 datetime.today()
                 .date()
             )
+        # =====================================================
+        # AFTERNOON SHIFT
+        # =====================================================
+        
+        AFTERNOON_SHIFT_START = time(
+            13,
+            0
+        )
+
+        df["Shift"] = np.where(
+            df["Time in"].dt.time
+            >= AFTERNOON_SHIFT_START,
+            "Night Shift",
+            "Afternoon Shift",
+            "Day Shift"
+        )
 
         # =====================================================
         # SHIFT
