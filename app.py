@@ -305,18 +305,14 @@ elif menu == "Attendance Reports":
         # SHIFT
         # =====================================================
 
-        
-        AFTERNOON_NIGHT_SHIFT_START = time(
-            13,
-            0,
-            0
-        )
+        AFTERNOON_NIGHT_SHIFT_START = time(13, 0, 0)
+
         df["Shift"] = np.where(
-            df["Time in"].dt.time
-            >= AFTERNOON_NIGHT_SHIFT_START,
+            df["Time in"].dt.time >= AFTERNOON_NIGHT_SHIFT_START,
             "Afternoon/Night Shift",
             "Day Shift"
         )
+        
 
         # =====================================================
         # LATE STAFF
@@ -356,7 +352,7 @@ elif menu == "Attendance Reports":
             (
                 (
                     df["Shift"]
-                    == "Night Shift"
+                    == "Afternoon/Night Shift"
                 )
                 &
                 (
@@ -430,7 +426,7 @@ elif menu == "Attendance Reports":
                     approved["Name"]
                     .astype(str)
                 )
-                        # =====================================================
+        # =====================================================
         # ABSENTEES
         # ONLY STAFF WITHOUT TIME IN = ABSENT
         # =====================================================
@@ -880,4 +876,78 @@ elif menu == "HR Analytics":
                 )
             )
 
-            # =
+            # =====================================================
+            # PERFORMANCE TABLE
+            # =====================================================
+
+            st.subheader(
+                "📅 Monthly Performance Ranking"
+            )
+
+            st.dataframe(
+                monthly_summary,
+                use_container_width=True
+            )
+
+            # =====================================================
+            # TOP PERFORMERS
+            # =====================================================
+
+            fig = px.bar(
+                monthly_summary.head(10),
+                x="Name",
+                y="Punctuality (%)",
+                title="Top Monthly Performers"
+            )
+
+            st.plotly_chart(
+                fig,
+                use_container_width=True
+            )
+
+            # =====================================================
+            # STAFF LATE > 5 TIMES
+            # =====================================================
+
+            late_staff = (
+                monthly_summary[
+                    monthly_summary[
+                        "Late_Count"
+                    ] > 5
+                ]
+            )
+
+            st.subheader(
+                "⚠ Employees Late More Than 5 Times"
+            )
+
+            if late_staff.empty:
+
+                st.success(
+                    "No employee has been late more than 5 times."
+                )
+
+            else:
+
+                st.dataframe(
+                    late_staff[
+                        [
+                            "Name",
+                            "Late_Count",
+                            "Punctuality (%)"
+                        ]
+                    ],
+                    use_container_width=True
+                )
+
+                fig = px.bar(
+                    late_staff,
+                    x="Name",
+                    y="Late_Count",
+                    title="Late More Than 5 Times"
+                )
+
+                st.plotly_chart(
+                    fig,
+                    use_container_width=True
+                )
