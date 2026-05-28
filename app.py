@@ -336,31 +336,16 @@ elif menu == "Attendance Reports":
         # =====================================================
 
         overtime = df[
-            (
-                (
-                    df["Shift"]
-                    == "Day Shift"
-                )
-                &
-                (
-                    df["Time out"]
-                    .dt.time
-                    > time(19, 0)
-                )
-            )
-            |
-            (
-                (
-                    df["Shift"]
-                    == "Afternoon/Night Shift"
-                )
-                &
-                (
-                    df["Time out"]
-                    .dt.time
-                    > time(8, 0)
-                )
-            )
+        (
+            df["Shift"]
+            == "Day Shift"
+        )
+        &
+        (
+            df["Time out"]
+            .dt.time
+            > time(19, 0)
+        )
         ]
 
         # =====================================================
