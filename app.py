@@ -544,7 +544,7 @@ elif menu == "Attendance Reports":
         )
 
         c4.metric(
-            "Night Shift",
+            "Afternoon/Night Shift",
             len(
                 df[
                     df["Shift"]
